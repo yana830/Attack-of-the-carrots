@@ -6,21 +6,21 @@ window = display.set_mode((700,500))
 display.set_caption("Shooter")
 
 background = transform.scale(image.load('lawn.jpg'),(700,500))
+background2 = transform.scale(image.load('lawn2.jpg'),(700,500))
 happy = transform.scale(image.load('happy.png'),(300,300))
 sad = transform.scale(image.load('sad.png'),(300,300))
 
-mixer.init()
+level = 1
+
+'''mixer.init()
 mixer.music.load('song.ogg')
-mixer.music.play()
+mixer.music.play()'''
 
 throw = mixer.Sound('throw2.ogg')
 
 font.init()
 font1 = font.SysFont('Arial', 25)
-font2 = font.SysFont('Arial', 70)
-
-lost = font2.render("Вы проиграли...", 1, (245, 105, 66))
-won = font2.render("Вы выиграли!", 1, (245, 105, 66))
+font2 = font.SysFont('Arial', 50)
 
 class GameSprite(sprite.Sprite): # * класс спрайтов
     def __init__(self, player_image, player_x, player_y, size_x, size_y, player_speed):
@@ -43,6 +43,7 @@ class Player(GameSprite): # ! класс игрока
             self.rect.x -= self.speed
 
     def fire(self):
+        global level
         bullet = Bullet('meteorite.png', self.rect.centerx, self.rect.top, 20, 20, 4)
         bullets.add(bullet)
     
@@ -68,16 +69,21 @@ bullets = sprite.Group()
 bunny = Player('amazed.png', 100,400,110,110, 7)
 
 carrots = sprite.Group()
-for i in range(5):
-    carrot = Objects('angry.png', randint(100,650), 0, 90, 90, 2)
-    carrots.add(carrot)
+if level == 1:
+    for i in range(5):
+        carrot = Objects('angry.png', randint(100,650), 0, 90, 90, 2)
+        carrots.add(carrot)
+if level == 2:
+    for i in range(5):
+        carrot = Objects('can.png', randint(100,650), 0, 90, 90, 2)
+        carrots.add(carrot)
 
 finish = False
 run = True
 num_fire = 0
 rel_time = False
-while run:
 
+while run:
     keys_pressed = key.get_pressed()
     for e in event.get():
         if e.type == QUIT:
@@ -91,55 +97,125 @@ while run:
                 if num_fire >= 5 and rel_time == False:
                     rel_time = True
                     start = time.get_ticks()
+            if e.key == K_f:
+                finish = False
+                loss = 0
+                score = 0
+                num_fire = 0
+                if level == 1:
+                    for i in range(5):
+                        carrot = Objects('angry.png', randint(100,650), 0, 90, 90, 2)
+                        carrots.add(carrot)
+                if level == 2:
+                    for i in range(5):
+                        carrot = Objects('can.png', randint(100,650), 0, 90, 90, 1)
+                        carrots.add(carrot)
+            if e.key == K_n:
+                bullets.empty()
+                finish = False
+                loss = 0
+                score = 0 
+                level += 1
+                bullets.empty()
+                if level == 2:
+                    for i in range(5):
+                        carrot = Objects('can.png', randint(100,650), 0, 90, 90, 1)
+                        carrots.add(carrot)
 
     if not finish:
-        window.blit(background,(0,0))
-        carrots.draw(window)
-        carrots.update()
+        if level == 1:
+            color = (245, 105, 66)
+        if level == 2:
+            color = (74, 50, 168)
 
-        text_count = font1.render("Счёт: " + str(score), 1, (245, 105, 66))
-        text_lose = font1.render("Пропущено: " + str(loss), 1, (245, 105, 66))
-        window.blit(text_count, (10,25))
-        window.blit(text_lose, (10,50))
+        lost = font2.render("Вы проиграли...", 1, color)
+        won = font2.render("Вы выиграли!", 1, color)
+        start_again = font1.render("Чтобы начать заново нажмите F" , 1, color)
+        next_level = font1.render('Чтобы перейти на следующий уровень нажмите N', 1, color)
 
+        if level == 1:
+            window.blit(background,(0,0))
+            carrots.draw(window)
+            carrots.update()
+
+            bullets.update()
+            bullets.draw(window)
+
+            text_count = font1.render("Счёт: " + str(score), 1, color)
+            text_lose = font1.render("Пропущено: " + str(loss), 1, color)
+            window.blit(text_count, (10,25))
+            window.blit(text_lose, (10,50))
+        
+            carrots_list = sprite.groupcollide(carrots, bullets, True, True)
+            for carrot in carrots_list:
+                score += 1
+                carrot = Objects('angry.png', randint(100,650), 0, 90, 90, 2)
+                carrots.add(carrot)
+
+            if score >= 3: 
+                finish = True
+                window.blit(background, (0,0))
+                window.blit(happy, (0,100))
+                window.blit(won, (270,170))
+                window.blit(start_again, (300,30))
+                window.blit(next_level, (100,60))
+                carrots.empty()
+
+            if sprite.spritecollide(bunny, carrots, False) or loss >= 3:
+                finish = True
+                window.blit(background, (0,0))
+                window.blit(sad, (0,100))
+                window.blit(lost, (270,170))
+                window.blit(start_again ,(300,30))
+                carrots.empty()
+
+        if level == 2:
+            window.blit(background2,(0,0))
+            carrots.draw(window)
+            carrots.update()
+
+            bullets.update()
+            bullets.draw(window)
+
+            text_count = font1.render("Счёт: " + str(score), 1, color)
+            text_lose = font1.render("Пропущено: " + str(loss), 1, color)
+            window.blit(text_count, (10,25))
+            window.blit(text_lose, (10,50))
+        
+            carrots_list = sprite.groupcollide(carrots, bullets, True, True)
+            for carrot in carrots_list:
+                score += 1
+                carrot = Objects('can.png', randint(100,650), 0, 90, 90, 1)
+                carrots.add(carrot)
+
+            if score >= 6:
+                finish = True
+                window.blit(background2, (0,0))
+                window.blit(happy, (0,100))
+                window.blit(won, (270,170))
+                window.blit(start_again, (300,30))
+                window.blit(next_level, (100,60))
+                carrots.empty()
+
+            if sprite.spritecollide(bunny, carrots, False) or loss >= 3:
+                finish = True
+                window.blit(background2, (0,0))
+                window.blit(sad, (0,100))
+                window.blit(lost, (270,170))
+                window.blit(start_again ,(300,30))
+                carrots.empty()
+                
         if rel_time:
             now = time.get_ticks()
             if now - start >= 3000:
                 num_fire = 0
                 rel_time = False
             else:
-                text_time = font1.render("Подождите, идет перезарядка..." , 1, (245, 105, 66))
-                window.blit(text_time, (230,350))
-
-        carrots_list = sprite.groupcollide(carrots, bullets, True, True)
-        for carrot in carrots_list:
-            score += 1
-            carrot = Objects('angry.png', randint(100,650), 0, 90, 90, 2)
-            carrots.add(carrot)
-
-        if score >= 10:
-            finish = True
-            window.blit(background, (0,0))
-            window.blit(happy, (0,100))
-            window.blit(won, (270,170))
-            
-        if sprite.spritecollide(bunny, carrots, False) or loss >= 3:
-            finish = True
-            window.blit(background, (0,0))
-            window.blit(sad, (0,100))
-            window.blit(lost, (270,170))
-            
-
+                text_time = font1.render("Подождите, идет перезарядка..." , 1, color)
+                window.blit(text_time, (180,350))
         bunny.reset()
         bunny.update()
-
-        bullets.update()
-        bullets.draw(window)
         
         display.update()
 
-    time.delay(50) #0.05 sec
-
-
-
-
+    time.delay(50) #0.05 sec    
